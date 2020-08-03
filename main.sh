@@ -158,9 +158,7 @@ write_post() {
 }
 
 tempfile_is_nonempty() {
-	if [[ -z $TERMCHAN_POST_TEMPFILE || ! -f $TERMCHAN_POST_TEMPFILE ]]; then
-		return 1
-	fi
+	[[ -f $TERMCHAN_POST_TEMPFILE ]] || return 1
 	grep -E '[^\w]' "${TERMCHAN_POST_TEMPFILE}" >/dev/null
 	return $?
 }

@@ -10,7 +10,7 @@ This is a small wrapper around the various curl commands to interact with a
 Clone this repository, create a symlink to `main.sh`, e.g. via
 
 ```
-ln -s main.sh ~/.local/bin/tccli
+ln -s $PWD/main.sh ~/.local/bin/tccli
 ```
 
 This will make the program available under the name `tccli` which this README

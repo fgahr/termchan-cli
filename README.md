@@ -9,7 +9,7 @@ This is a small wrapper around the various curl commands to interact with a
 
 Clone this repository, create a symlink to `main.sh`, e.g. via
 
-```
+```text
 ln -s $PWD/main.sh ~/.local/bin/tccli
 ```
 
@@ -43,24 +43,24 @@ interactively.
 
 ```text
 $ tccli help
-Usage: tccli command [opt]
+Usage: tccli command [arg]
 
 Available commands:
- h|help                        print this help message
- w|welcome                     print the server's welcome message
- v|view          [board[/id]]  view a board or a thread
- r|reply         [board/id]    reply to a thread (interactive)
- c|create-thread [board]       create a new thread (interactive)
+ h|help                    print this help message
+ w|welcome                 print the server's welcome message
+ v|view      <board[/id]>  view a board or a thread
+ r|reply     <board/id>    reply to a thread (interactive)
+ c|create    <board>       create a new thread (interactive)
 ```
 
-### View a Thread or Board
+### View a Board or Thread
 
 ```text
-# View a thread
-$ tccli view b/2
-...
 # View a board
-$ tccli v g
+$ tccli view g
+...
+# View a thread
+$ tccli v b/2
 ...
 ```
 

@@ -164,14 +164,14 @@ do_create_thread() {
 }
 
 print_usage() {
-	echo "Usage: ${PROGNAME} command [opt]"
+	echo "Usage: ${PROGNAME} command [arg]"
 	echo ""
 	echo "Available commands:"
-	echo " h|help                        print this help message"
-	echo " w|welcome                     print the server's welcome message"
-	echo " v|view          [board/[id]]  view a thread"
-	echo " r|reply         [board/id]    reply to a thread (interactive)"
-	echo " c|create-thread [board]       create a new thread (interactive)"
+	echo " h|help                    print this help message"
+	echo " w|welcome                 print the server's welcome message"
+	echo " v|view      <board[/id]>  view a board or a thread"
+	echo " r|reply     <board/id>    reply to a thread (interactive)"
+	echo " c|create    <board>       create a new thread (interactive)"
 }
 
 # MAIN #########################################################################

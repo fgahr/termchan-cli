@@ -60,7 +60,7 @@ Available commands:
 $ tccli view b/2
 ...
 # View a board
-$ tccli v
+$ tccli v g
 ...
 ```
 

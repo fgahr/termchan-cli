@@ -115,13 +115,16 @@ url_base() {
 	echo "http://${TERMCHAN_SERVER}:${TERMCHAN_PORT}"
 }
 
-do_help() {
+do_welcome() {
 	curl -s "$(url_base)/"
 }
 
 do_view() {
-	# TODO: Regex match on fragment
 	local fragment="$1"
+	fragment="${fragment##/}" # Remove leading slashes
+	if [[ ! $fragment =~ [a-z]+(/[0-9]+)? ]]; then
+		echo "cannot view '${fragment}', argument must be a board or a thread"
+	fi
 	curl -s "$(url_base)/${fragment}"
 }
 
@@ -131,8 +134,12 @@ post_input_help() {
 }
 
 do_reply() {
-	# TODO: Regex match on fragment
 	local fragment="$1"
+	fragment="${fragment##/}" # Remove leading slashes
+	if [[ ! $fragment =~ [a-z]+/[0-9]+ ]]; then
+		echo "cannot reply to '${fragment}'; must be of the form 'board/thread'"
+		exit 2
+	fi
 	post_input_help
 	curl -s "$(url_base)/${fragment}" \
 		--data-urlencode "name=${TERMCHAN_NAME}" \
@@ -140,10 +147,14 @@ do_reply() {
 }
 
 do_create_thread() {
-	# TODO: Regex match on board
 	local board="$1"
+	board="${board##/}" # Remove leading slashes
+	if [[ ! $board =~ [a-z]+/? ]]; then
+		echo "illegal board name: '${board}'"
+		exit 2
+	fi
 	local topic=""
-	echo "Enter topic for new thread:"
+	echo "Topic for the thread? (Can be empty)"
 	read -r topic
 	post_input_help
 	curl -s "$(url_base)/${board}" \
@@ -153,7 +164,14 @@ do_create_thread() {
 }
 
 print_usage() {
-	echo "Usage: ${PROGNAME} (help|view)"
+	echo "Usage: ${PROGNAME} command [opt]"
+	echo ""
+	echo "Available commands:"
+	echo " h|help                        print this help message"
+	echo " w|welcome                     print the server's welcome message"
+	echo " v|view          [board/[id]]  view a thread"
+	echo " r|reply         [board/id]    reply to a thread (interactive)"
+	echo " c|create-thread [board]       create a new thread (interactive)"
 }
 
 # MAIN #########################################################################
@@ -167,20 +185,23 @@ prompt_for_settings
 write_config
 
 case "$1" in
-"help")
-	do_help
+h | help | -h | --help)
+	print_usage
 	;;
-"view")
+w | welcome)
+	do_welcome
+	;;
+v | view)
 	do_view "$2"
 	;;
-"reply")
+r | reply)
 	do_reply "$2"
 	;;
-"create-thread")
+c | create-thread)
 	do_create_thread "$2"
 	;;
 *)
-	echo "unknown command $1"
+	print_usage
 	exit 1
 	;;
 esac

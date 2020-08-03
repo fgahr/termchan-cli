@@ -163,6 +163,11 @@ tempfile_is_nonempty() {
 	return $?
 }
 
+fail_empty_post() {
+	warn "aborted: empty post was not uploaded"
+	exit 3
+}
+
 do_reply() {
 	local fragment="$1"
 	fragment="${fragment##/}" # Remove leading slashes
@@ -172,7 +177,7 @@ do_reply() {
 	fi
 	create_tempfile
 	write_post
-	tempfile_is_nonempty || exit 3
+	tempfile_is_nonempty || fail_empty_post
 	curl -s "$(url_base)/${fragment}" \
 		--data-urlencode "name=${TERMCHAN_NAME}" \
 		--data-urlencode "content@${TERMCHAN_POST_TEMPFILE}"
@@ -190,7 +195,7 @@ do_create_thread() {
 	read -r topic
 	create_tempfile
 	write_post
-	tempfile_is_nonempty || exit 3
+	tempfile_is_nonempty || fail_empty_post
 	curl -s "$(url_base)/${board}" \
 		--data-urlencode "name=${TERMCHAN_NAME}" \
 		--data-urlencode "topic=${topic}" \

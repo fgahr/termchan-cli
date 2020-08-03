@@ -81,6 +81,7 @@ yes_or_no() {
 }
 
 write_config() {
+	local file_created="1"
 	if [[ $TERMCHAN_WRITE_CONFIG -eq 0 ]]; then
 		return 0
 	fi
@@ -91,6 +92,9 @@ write_config() {
 
 	if yes_or_no "Write config?"; then
 		mkdir -p "${CONFIG_DIR}"
+		if [[ -f $CONFIG_FILE ]]; then
+			file_created="0"
+		fi
 		if [[ $TERMCHAN_SERVER_IN_FILE -eq 0 ]]; then
 			echo "server=${TERMCHAN_SERVER}" >>"$CONFIG_FILE"
 		fi
@@ -100,11 +104,15 @@ write_config() {
 		if [[ $TERMCHAN_NAME_IN_FILE -eq 0 ]]; then
 			echo "name=${TERMCHAN_NAME}" >>"$CONFIG_FILE"
 		fi
+
+		if [[ $file_created -eq 1 ]]; then
+			echo "config file ${CONFIG_FILE} created"
+		fi
 	fi
 }
 
 url_base() {
-	echo "${TERMCHAN_SERVER}:${TERMCHAN_PORT}"
+	echo "http://${TERMCHAN_SERVER}:${TERMCHAN_PORT}"
 }
 
 do_help() {
@@ -112,8 +120,31 @@ do_help() {
 }
 
 do_view() {
+	# TODO: Regex match on fragment
 	local fragment="$1"
 	curl -s "$(url_base)/${fragment}"
+}
+
+do_reply() {
+	# TODO: Regex match on fragment
+	local fragment="$1"
+	echo "Type your reply (Ctrl-C to abort, Ctrl-D to submit):"
+	curl -s "$(url_base)/${fragment}" \
+		--data-urlencode "name=${TERMCHAN_NAME}" \
+		--data-urlencode "content=$(cat)"
+}
+
+do_create_thread() {
+	# TODO: Regex match on board
+	local board="$1"
+	local topic=""
+	echo "Enter topic for new thread (Ctrl-C to abort, Ctrl-D to submit):"
+	topic="$(cat)"
+	echo "Enter post content (Ctrl-C to abort, Ctrl-D to submit):"
+	curl -s "$(url_base)/${board}" \
+		--data-urlencode "name=${TERMCHAN_NAME}" \
+		--data-urlencode "topic=${topic}" \
+		--data-urlencode "content=$(cat)"
 }
 
 print_usage() {
@@ -136,5 +167,15 @@ case "$1" in
 	;;
 "view")
 	do_view "$2"
+	;;
+"reply")
+	do_reply "$2"
+	;;
+"create-thread")
+	do_create_thread "$2"
+	;;
+*)
+	echo "unknown command $1"
+	exit 1
 	;;
 esac

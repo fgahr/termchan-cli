@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-set -euo pipefail
+set -e
 
 PROGNAME="$0"
 
@@ -125,33 +125,38 @@ do_view() {
 	curl -s "$(url_base)/${fragment}"
 }
 
+post_input_help() {
+	echo "Enter your post. Please end with a newline."
+	echo "Press Ctrl-D to submit, Ctrl-C to abort."
+}
+
 do_reply() {
 	# TODO: Regex match on fragment
 	local fragment="$1"
-	echo "Type your reply (Ctrl-C to abort, Ctrl-D to submit):"
+	post_input_help
 	curl -s "$(url_base)/${fragment}" \
 		--data-urlencode "name=${TERMCHAN_NAME}" \
-		--data-urlencode "content=$(cat)"
+		--data-urlencode "content@-"
 }
 
 do_create_thread() {
 	# TODO: Regex match on board
 	local board="$1"
 	local topic=""
-	echo "Enter topic for new thread (Ctrl-C to abort, Ctrl-D to submit):"
-	topic="$(cat)"
-	echo "Enter post content (Ctrl-C to abort, Ctrl-D to submit):"
+	echo "Enter topic for new thread:"
+	read -r topic
+	post_input_help
 	curl -s "$(url_base)/${board}" \
 		--data-urlencode "name=${TERMCHAN_NAME}" \
 		--data-urlencode "topic=${topic}" \
-		--data-urlencode "content=$(cat)"
+		--data-urlencode "content@-"
 }
 
 print_usage() {
 	echo "Usage: ${PROGNAME} (help|view)"
 }
 
-# MAIN
+# MAIN #########################################################################
 if [[ $# -lt 1 ]]; then
 	print_usage
 	exit 1

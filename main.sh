@@ -16,6 +16,25 @@ TERMCHAN_SERVER_IN_FILE="0"
 TERMCHAN_PORT_IN_FILE="0"
 TERMCHAN_NAME_IN_FILE="0"
 
+# Temporary file for writing posts
+TERMCHAN_POST_TEMPFILE=""
+
+create_tempfile() {
+	TERMCHAN_POST_TEMPFILE="$(mktemp)"
+}
+
+cleanup_tempfile() {
+	if [[ -f $TERMCHAN_POST_TEMPFILE ]]; then
+		rm "${TERMCHAN_POST_TEMPFILE}"
+	fi
+}
+
+trap cleanup_tempfile EXIT
+
+warn() {
+	echo "$1" >&2
+}
+
 read_config() {
 	# Config variables
 	local server=""
@@ -123,44 +142,61 @@ do_view() {
 	local fragment="$1"
 	fragment="${fragment##/}" # Remove leading slashes
 	if [[ ! $fragment =~ [a-z]+(/[0-9]+)? ]]; then
-		echo "cannot view '${fragment}', argument must be a board or a thread"
+		warn "cannot view '${fragment}', argument must be a board or a thread"
 	fi
 	curl -s "$(url_base)/${fragment}"
 }
 
-post_input_help() {
-	echo "Enter your post. Please end with a newline."
-	echo "Press Ctrl-D to submit, Ctrl-C to abort."
+write_post() {
+	(
+		echo -n "# Write your post. Empty posts will not be uploaded."
+		echo " Do not edit or remove this line."
+	) >>"${TERMCHAN_POST_TEMPFILE}"
+	${EDITOR:-vim} "${TERMCHAN_POST_TEMPFILE}"
+	# Delete the first line
+	sed -i -e "1d" "${TERMCHAN_POST_TEMPFILE}"
+}
+
+tempfile_is_nonempty() {
+	if [[ -z $TERMCHAN_POST_TEMPFILE || ! -f $TERMCHAN_POST_TEMPFILE ]]; then
+		return 1
+	fi
+	grep -E '[^\w]' "${TERMCHAN_POST_TEMPFILE}" >/dev/null
+	return $?
 }
 
 do_reply() {
 	local fragment="$1"
 	fragment="${fragment##/}" # Remove leading slashes
 	if [[ ! $fragment =~ [a-z]+/[0-9]+ ]]; then
-		echo "cannot reply to '${fragment}'; must be of the form 'board/thread'"
+		warn "cannot reply to '${fragment}'; must be of the form 'board/thread'"
 		exit 2
 	fi
-	post_input_help
+	create_tempfile
+	write_post
+	tempfile_is_nonempty || exit 3
 	curl -s "$(url_base)/${fragment}" \
 		--data-urlencode "name=${TERMCHAN_NAME}" \
-		--data-urlencode "content@-"
+		--data-urlencode "content@${TERMCHAN_POST_TEMPFILE}"
 }
 
 do_create_thread() {
 	local board="$1"
 	board="${board##/}" # Remove leading slashes
 	if [[ ! $board =~ [a-z]+/? ]]; then
-		echo "illegal board name: '${board}'"
+		warn "illegal board name: '${board}'"
 		exit 2
 	fi
 	local topic=""
 	echo "Topic for the thread? (Can be empty)"
 	read -r topic
-	post_input_help
+	create_tempfile
+	write_post
+	tempfile_is_nonempty || exit 3
 	curl -s "$(url_base)/${board}" \
 		--data-urlencode "name=${TERMCHAN_NAME}" \
 		--data-urlencode "topic=${topic}" \
-		--data-urlencode "content@-"
+		--data-urlencode "content@${TERMCHAN_POST_TEMPFILE}"
 }
 
 print_usage() {

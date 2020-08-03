@@ -149,7 +149,7 @@ do_view() {
 
 write_post() {
 	(
-		echo -n "# Write your post. Empty posts will not be uploaded."
+		echo -n "# Write your post below. Empty posts will not be uploaded."
 		echo " Do not edit or remove this line."
 	) >>"${TERMCHAN_POST_TEMPFILE}"
 	${EDITOR:-vim} "${TERMCHAN_POST_TEMPFILE}"

@@ -19,21 +19,17 @@ TERMCHAN_NAME_IN_FILE="0"
 # Temporary file for writing posts
 TERMCHAN_POST_TEMPFILE=""
 
-create_tempfile() {
-	TERMCHAN_POST_TEMPFILE="$(mktemp)"
-}
+### UTILITY ####################################################################
 
-cleanup_tempfile() {
-	if [[ -f $TERMCHAN_POST_TEMPFILE ]]; then
-		rm "${TERMCHAN_POST_TEMPFILE}"
-	fi
+url_base() {
+	echo "http://${TERMCHAN_SERVER}:${TERMCHAN_PORT}"
 }
-
-trap cleanup_tempfile EXIT
 
 warn() {
 	echo "$1" >&2
 }
+
+### CONFIGURATION ##############################################################
 
 read_config() {
 	# Config variables
@@ -105,7 +101,9 @@ write_config() {
 		return 0
 	fi
 
-	if [[ $TERMCHAN_SERVER_IN_FILE -eq 1 && $TERMCHAN_PORT_IN_FILE -eq 1 && $TERMCHAN_NAME_IN_FILE -eq 1 ]]; then
+	if [[ $TERMCHAN_SERVER_IN_FILE -eq 1 && \
+		$TERMCHAN_PORT_IN_FILE -eq 1 && \
+		$TERMCHAN_NAME_IN_FILE -eq 1 ]]; then
 		return 0
 	fi
 
@@ -130,22 +128,19 @@ write_config() {
 	fi
 }
 
-url_base() {
-	echo "http://${TERMCHAN_SERVER}:${TERMCHAN_PORT}"
+### TEMP FILE (EDIT POST) ######################################################
+
+create_tempfile() {
+	TERMCHAN_POST_TEMPFILE="$(mktemp)"
 }
 
-do_welcome() {
-	curl -s "$(url_base)/"
-}
-
-do_view() {
-	local fragment="$1"
-	fragment="${fragment##/}" # Remove leading slashes
-	if [[ ! $fragment =~ [a-z]+(/[0-9]+)? ]]; then
-		warn "cannot view '${fragment}', argument must be a board or a thread"
+cleanup_tempfile() {
+	if [[ -f $TERMCHAN_POST_TEMPFILE ]]; then
+		rm "${TERMCHAN_POST_TEMPFILE}"
 	fi
-	curl -s "$(url_base)/${fragment}"
 }
+
+trap cleanup_tempfile EXIT
 
 write_post() {
 	(
@@ -161,6 +156,21 @@ tempfile_is_nonempty() {
 	[[ -f $TERMCHAN_POST_TEMPFILE ]] || return 1
 	grep -E '[^\w]' "${TERMCHAN_POST_TEMPFILE}" >/dev/null
 	return $?
+}
+
+### COMMANDS ###################################################################
+
+do_welcome() {
+	curl -s "$(url_base)/"
+}
+
+do_view() {
+	local fragment="$1"
+	fragment="${fragment##/}" # Remove leading slashes
+	if [[ ! $fragment =~ [a-z]+(/[0-9]+)? ]]; then
+		warn "cannot view '${fragment}', argument must be a board or a thread"
+	fi
+	curl -s "$(url_base)/${fragment}"
 }
 
 fail_empty_post() {
@@ -213,7 +223,8 @@ print_usage() {
 	echo " c|create    <board>       create a new thread (interactive)"
 }
 
-# MAIN #########################################################################
+###  MAIN ######################################################################
+
 if [[ $# -lt 1 ]]; then
 	print_usage
 	exit 1

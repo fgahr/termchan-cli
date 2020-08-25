@@ -2,7 +2,7 @@
 # shellcheck shell=bash
 set -e
 
-PROGNAME="$0"
+PROGNAME="$(basename $0)"
 
 CONFIG_DIR="${HOME}/.config/termchan-cli"
 CONFIG_FILE="${CONFIG_DIR}/settings.sh"

@@ -101,9 +101,8 @@ write_config() {
 		return 0
 	fi
 
-	if [[ $TERMCHAN_SERVER_IN_FILE -eq 1 && \
-		$TERMCHAN_PORT_IN_FILE -eq 1 && \
-		$TERMCHAN_NAME_IN_FILE -eq 1 ]]; then
+	if [[ $TERMCHAN_SERVER_IN_FILE -eq 1 && $TERMCHAN_PORT_IN_FILE -eq 1 && $TERMCHAN_NAME_IN_FILE -eq 1 ]] \
+		; then
 		return 0
 	fi
 
@@ -126,6 +125,12 @@ write_config() {
 			echo "config file ${CONFIG_FILE} created"
 		fi
 	fi
+}
+
+setup() {
+	read_config
+	prompt_for_settings
+	write_config
 }
 
 ### TEMP FILE (EDIT POST) ######################################################
@@ -230,25 +235,22 @@ if [[ $# -lt 1 ]]; then
 	exit 1
 fi
 
-read_config
-prompt_for_settings
-write_config
-
 case "$1" in
 h | help | -h | --help)
 	print_usage
+	exit 0
 	;;
 w | welcome)
-	do_welcome
+	setup && do_welcome
 	;;
 v | view)
-	do_view "$2"
+	setup && do_view "$2"
 	;;
 r | reply)
-	do_reply "$2"
+	setup && do_reply "$2"
 	;;
 c | create-thread)
-	do_create_thread "$2"
+	setup && do_create_thread "$2"
 	;;
 *)
 	print_usage
